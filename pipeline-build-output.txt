@@ -1,0 +1,219 @@
+Started cicd-demo-pipeline #3
+Started from command line by rayhan
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on Jenkins in /var/jenkins_home/workspace/cicd-demo-pipeline
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout)
+[Pipeline] echo
+📥 Checking out code...
+[Pipeline] sh
++ echo Code checkout completed
+Code checkout completed
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Build)
+[Pipeline] echo
+🔨 Building application...
+[Pipeline] dir
+Running in /var/jenkins_home/workspace/cicd-demo-pipeline/app
+[Pipeline] {
+[Pipeline] sh
++ echo Installing dependencies...
+Installing dependencies...
++ pip3 install --user -r requirements.txt
+error: externally-managed-environment
+
+× This environment is externally managed
+╰─> To install Python packages system-wide, try apt install
+    python3-xyz, where xyz is the package you are trying to
+    install.
+    
+    If you wish to install a non-Debian-packaged Python package,
+    create a virtual environment using python3 -m venv path/to/venv.
+    Then use path/to/venv/bin/python and path/to/venv/bin/pip. Make
+    sure you have python3-full installed.
+    
+    If you wish to install a non-Debian packaged Python application,
+    it may be easiest to use pipx install xyz, which will manage a
+    virtual environment for you. Make sure you have pipx installed.
+    
+    See /usr/share/doc/python3.13/README.venv for more information.
+
+note: If you believe this is a mistake, please contact your Python installation or OS distribution provider. You can override this, at the risk of breaking your Python installation or OS, by passing --break-system-packages.
+hint: See PEP 668 for the detailed specification.
++ true
++ echo Build completed successfully!
+Build completed successfully!
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Test)
+[Pipeline] echo
+🧪 Running unit tests...
+[Pipeline] dir
+Running in /var/jenkins_home/workspace/cicd-demo-pipeline/app
+[Pipeline] {
+[Pipeline] sh
++ echo Executing test suite...
+Executing test suite...
++ python3 test_app.py
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.003s
+
+OK
++ echo All tests passed! ✅
+All tests passed! ✅
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Package)
+[Pipeline] echo
+📦 Building Docker image...
+[Pipeline] script
+[Pipeline] {
+[Pipeline] sh
++ echo Building Docker image: cicd-demo-app:latest
+Building Docker image: cicd-demo-app:latest
++ docker build -t cicd-demo-app:latest .
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 403B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.9-slim
+#2 DONE 2.6s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/6] FROM docker.io/library/python:3.9-slim@sha256:2d97f6910b16bd338d3060f261f53f144965f755599aab1acda1e13cf1731b1b
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.52kB done
+#5 DONE 0.0s
+
+#6 [3/6] COPY app/ ./app
+#6 CACHED
+
+#7 [2/6] WORKDIR /app
+#7 CACHED
+
+#8 [4/6] COPY app/requirements.txt ./app/requirements.txt
+#8 CACHED
+
+#9 [5/6] COPY healthcheck.sh ./healthcheck.sh
+#9 CACHED
+
+#10 [6/6] RUN pip install --no-cache-dir -r app/requirements.txt
+#10 CACHED
+
+#11 exporting to image
+#11 exporting layers done
+#11 writing image sha256:f181abd5f3a4d5a0fdce5d790a0cb1d8dea30a10af558e48837cbfe72033aa79 done
+#11 naming to docker.io/library/cicd-demo-app:latest done
+#11 DONE 0.0s
++ echo Docker image built successfully!
+Docker image built successfully!
++ docker images
++ grep cicd-demo-app
+cicd-demo-app            latest    f181abd5f3a4   34 minutes ago   133MB
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deploy)
+[Pipeline] echo
+🚀 Deploying application...
+[Pipeline] script
+[Pipeline] {
+[Pipeline] sh
++ echo Stopping existing containers...
+Stopping existing containers...
++ docker-compose down
+time="2025-11-13T17:11:33Z" level=warning msg="/var/jenkins_home/workspace/cicd-demo-pipeline/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ Container cicd-demo-app  Stopping
+ Container cicd-demo-app  Stopped
+ Container cicd-demo-app  Removing
+ Container cicd-demo-app  Removed
+ Network cicd-demo-pipeline_default  Removing
+ Network cicd-demo-pipeline_default  Resource is still in use
++ echo Starting application with Docker Compose...
+Starting application with Docker Compose...
++ docker-compose up -d
+time="2025-11-13T17:11:44Z" level=warning msg="/var/jenkins_home/workspace/cicd-demo-pipeline/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+time="2025-11-13T17:11:44Z" level=warning msg="Found orphan containers ([jenkins]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Container cicd-demo-app  Creating
+ Container cicd-demo-app  Created
+ Container cicd-demo-app  Starting
+ Container cicd-demo-app  Started
++ echo Waiting for application to start...
+Waiting for application to start...
++ sleep 5
++ echo Deployment completed!
+Deployment completed!
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Health Check)
+[Pipeline] echo
+🏥 Verifying application health...
+[Pipeline] script
+[Pipeline] {
+[Pipeline] sh
++ echo Running health check script...
+Running health check script...
++ chmod +x healthcheck.sh
++ ./healthcheck.sh
+Attempt 1/10 - got 000000, retrying in 3...
+Attempt 2/10 - got 000000, retrying in 3...
+Attempt 3/10 - got 000000, retrying in 3...
+Attempt 4/10 - got 000000, retrying in 3...
+Attempt 5/10 - got 000000, retrying in 3...
+Attempt 6/10 - got 000000, retrying in 3...
+Attempt 7/10 - got 000000, retrying in 3...
+Attempt 8/10 - got 000000, retrying in 3...
+Attempt 9/10 - got 000000, retrying in 3...
+Attempt 10/10 - got 000000, retrying in 3...
+Health check failed after 10 attempts
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] echo
+🧹 Cleaning up...
+[Pipeline] echo
+
+            ╔═══════════════════════════════════════╗
+            ║  ❌ PIPELINE FAILED                   ║
+            ╚═══════════════════════════════════════╝
+            
+            Please check the console output for errors.
+            
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+ERROR: script returned exit code 1
+Finished: FAILURE
+Completed cicd-demo-pipeline #3 : FAILURE

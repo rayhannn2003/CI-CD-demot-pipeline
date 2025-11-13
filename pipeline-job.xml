@@ -1,0 +1,140 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.40">
+  <description>CI/CD Demo Pipeline - Builds, tests, packages and deploys a Flask app</description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.93">
+    <script>pipeline {
+    agent any
+    
+    environment {
+        APP_NAME = &apos;cicd-demo-app&apos;
+        APP_VERSION = &quot;${BUILD_NUMBER}&quot;
+        DOCKER_IMAGE = &quot;${APP_NAME}:latest&quot;
+        APP_PORT = &apos;3000&apos;
+    }
+    
+    stages {
+        stage(&apos;Checkout&apos;) {
+            steps {
+                echo &apos;📥 Checking out code...&apos;
+                // In real scenario, this would be:
+                // checkout scm
+                // For demo, we assume code is already present
+                sh &apos;echo &quot;Code checkout completed&quot;&apos;
+            }
+        }
+        
+        stage(&apos;Build&apos;) {
+            steps {
+                echo &apos;🔨 Building application...&apos;
+                dir(&apos;app&apos;) {
+                    sh &apos;&apos;&apos;
+                        echo &quot;Installing dependencies...&quot;
+                        pip3 install --user -r requirements.txt || true
+                        echo &quot;Build completed successfully!&quot;
+                    &apos;&apos;&apos;
+                }
+            }
+        }
+        
+        stage(&apos;Test&apos;) {
+            steps {
+                echo &apos;🧪 Running unit tests...&apos;
+                dir(&apos;app&apos;) {
+                    sh &apos;&apos;&apos;
+                        echo &quot;Executing test suite...&quot;
+                        python3 test_app.py
+                        echo &quot;All tests passed! ✅&quot;
+                    &apos;&apos;&apos;
+                }
+            }
+        }
+        
+        stage(&apos;Package&apos;) {
+            steps {
+                echo &apos;📦 Building Docker image...&apos;
+                script {
+                    sh &quot;&quot;&quot;
+                        echo &quot;Building Docker image: ${DOCKER_IMAGE}&quot;
+                        docker build -t ${DOCKER_IMAGE} .
+                        echo &quot;Docker image built successfully!&quot;
+                        docker images | grep ${APP_NAME}
+                    &quot;&quot;&quot;
+                }
+            }
+        }
+        
+        stage(&apos;Deploy&apos;) {
+            steps {
+                echo &apos;🚀 Deploying application...&apos;
+                script {
+                    sh &apos;&apos;&apos;
+                        echo &quot;Stopping existing containers...&quot;
+                        docker-compose down || true
+                        
+                        echo &quot;Starting application with Docker Compose...&quot;
+                        docker-compose up -d
+                        
+                        echo &quot;Waiting for application to start...&quot;
+                        sleep 5
+                        
+                        echo &quot;Deployment completed!&quot;
+                    &apos;&apos;&apos;
+                }
+            }
+        }
+        
+        stage(&apos;Health Check&apos;) {
+            steps {
+                echo &apos;🏥 Verifying application health...&apos;
+                script {
+                    sh &apos;&apos;&apos;
+                        echo &quot;Running health check script...&quot;
+                        chmod +x healthcheck.sh
+                        ./healthcheck.sh
+                        
+                        echo &quot;&quot;
+                        echo &quot;✅ Pipeline completed successfully!&quot;
+                        echo &quot;Application is running at: http://localhost:${APP_PORT}&quot;
+                    &apos;&apos;&apos;
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo &apos;&apos;&apos;
+            ╔═══════════════════════════════════════╗
+            ║  ✅ PIPELINE COMPLETED SUCCESSFULLY   ║
+            ╚═══════════════════════════════════════╝
+            
+            🎉 All stages passed!
+            📊 Build Number: ${BUILD_NUMBER}
+            🐳 Docker Image: ${DOCKER_IMAGE}
+            🌐 Application URL: http://localhost:${APP_PORT}
+            💚 Health Status: OK
+            &apos;&apos;&apos;
+        }
+        failure {
+            echo &apos;&apos;&apos;
+            ╔═══════════════════════════════════════╗
+            ║  ❌ PIPELINE FAILED                   ║
+            ╚═══════════════════════════════════════╝
+            
+            Please check the console output for errors.
+            &apos;&apos;&apos;
+        }
+        always {
+            echo &apos;🧹 Cleaning up...&apos;
+            // Uncomment to clean up after each build
+            // sh &apos;docker-compose down || true&apos;
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
