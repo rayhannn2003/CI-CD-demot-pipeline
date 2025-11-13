@@ -242,4 +242,4 @@ docker inspect cicd-demo-app | grep -A 10 Health
 # Follow Jenkins logs in real-time
 docker exec -it jenkins tail -f /var/jenkins_home/logs/jenkins.log
 
-EOF
+EOF# CI-CD-demo-pipeline
